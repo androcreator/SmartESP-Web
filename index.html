@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>SmartESP</title>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #172554
+        );
+
+    color: white;
+
+    padding: 20px;
+}
+
+.container {
+
+    width: 100%;
+
+    max-width: 600px;
+
+    margin: auto;
+}
+
+.header {
+
+    text-align: center;
+
+    margin-bottom: 20px;
+}
+
+.header h1 {
+
+    font-size: 34px;
+
+    margin: 0;
+}
+
+.header p {
+
+    color: #94a3b8;
+
+    margin-top: 8px;
+}
+
+.card {
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    border-radius: 20px;
+
+    padding: 20px;
+
+    margin-bottom: 16px;
+}
+
+.status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    font-size: 16px;
+}
+
+.status-dot {
+
+    width: 12px;
+
+    height: 12px;
+
+    border-radius: 50%;
+
+    background: #ef4444;
+}
+
+.status-online {
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 12px
+        #22c55e;
+}
+
+.preview {
+
+    width: 140px;
+
+    height: 140px;
+
+    border-radius: 50%;
+
+    background: #000;
+
+    margin: 10px auto 20px;
+
+    box-shadow:
+        0 0 45px
+        rgba(
+            255,
+            255,
+            255,
+            0.15
+        );
+
+    transition:
+        background 0.3s;
+}
+
+.title {
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    margin-bottom: 18px;
+}
+
+.buttons {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+button {
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 15px 10px;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+button:active {
+
+    transform: scale(0.96);
+}
+
+.red {
+    background: #ef4444;
+    color: white;
+}
+
+.green {
+    background: #22c55e;
+    color: white;
+}
+
+.blue {
+    background: #3b82f6;
+    color: white;
+}
+
+.yellow {
+    background: #eab308;
+    color: white;
+}
+
+.purple {
+    background: #a855f7;
+    color: white;
+}
+
+.white {
+    background: white;
+    color: black;
+}
+
+.off {
+
+    background: #334155;
+
+    color: white;
+
+    grid-column:
+        span 3;
+}
+
+.custom-row {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: center;
+}
+
+input[type="color"] {
+
+    width: 65px;
+
+    height: 50px;
+
+    border: none;
+
+    background: transparent;
+
+}
+
+.apply {
+
+    flex: 1;
+
+    background: #2563eb;
+
+    color: white;
+}
+
+input[type="range"] {
+
+    width: 100%;
+}
+
+.range-value {
+
+    text-align: center;
+
+    margin-top: 10px;
+
+    color: #94a3b8;
+}
+
+.info {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+.info-box {
+
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            0.2
+        );
+
+    padding: 12px;
+
+    border-radius: 10px;
+}
+
+.label {
+
+    font-size: 11px;
+
+    color: #94a3b8;
+}
+
+.value {
+
+    margin-top: 5px;
+
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+
+<h1>SmartESP</h1>
+
+<p>ESP32-C6 Remote Controller</p>
+
+</div>
+
+<div class="card">
+
+<div class="status">
+
+<div
+    id="statusDot"
+    class="status-dot">
+</div>
+
+<strong id="connection">
+Connecting...
+</strong>
+
+</div>
+
+<div class="info">
+
+<div class="info-box">
+
+<div class="label">
+MQTT
+</div>
+
+<div
+    class="value"
+    id="mqttStatus">
+Connecting
+</div>
+
+</div>
+
+<div class="info-box">
+
+<div class="label">
+DEVICE
+</div>
+
+<div
+    class="value"
+    id="deviceStatus">
+Unknown
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">
+RGB Preview
+</div>
+
+<div
+    id="preview"
+    class="preview">
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">
+Quick Colors
+</div>
+
+<div class="buttons">
+
+<button
+    class="red"
+    onclick="setColor(255,0,0)">
+RED
+</button>
+
+<button
+    class="green"
+    onclick="setColor(0,255,0)">
+GREEN
+</button>
+
+<button
+    class="blue"
+    onclick="setColor(0,0,255)">
+BLUE
+</button>
+
+<button
+    class="yellow"
+    onclick="setColor(255,255,0)">
+YELLOW
+</button>
+
+<button
+    class="purple"
+    onclick="setColor(255,0,255)">
+PURPLE
+</button>
+
+<button
+    class="white"
+    onclick="setColor(255,255,255)">
+WHITE
+</button>
+
+<button
+    class="off"
+    onclick="turnOff()">
+OFF
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">
+Custom Color
+</div>
+
+<div class="custom-row">
+
+<input
+    type="color"
+    id="colorPicker"
+    value="#ff0000"
+>
+
+<button
+    class="apply"
+    onclick="applyCustomColor()">
+APPLY
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">
+Brightness
+</div>
+
+<input
+    type="range"
+    id="brightness"
+    min="1"
+    max="100"
+    value="30"
+    oninput="updateBrightness(this.value)"
+>
+
+<div
+    class="range-value"
+    id="brightnessValue">
+30%
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const MQTT_BROKER =
+    "wss://broker.hivemq.com:8884/mqtt";
+
+const MQTT_COMMAND_TOPIC =
+    "smartesp/7E5270/command";
+
+const MQTT_STATUS_TOPIC =
+    "smartesp/7E5270/status";
+
+let client;
+
+let currentR = 0;
+let currentG = 0;
+let currentB = 0;
+
+function connectMQTT() {
+
+    const clientId =
+        "SmartESP_Web_" +
+        Math.random()
+            .toString(16)
+            .substring(2);
+
+    client =
+        mqtt.connect(
+            MQTT_BROKER,
+            {
+                clientId:
+                    clientId,
+
+                clean: true,
+
+                connectTimeout:
+                    10000,
+
+                reconnectPeriod:
+                    5000
+            }
+        );
+
+    client.on(
+        "connect",
+        function () {
+
+            console.log(
+                "MQTT CONNECTED"
+            );
+
+            document
+                .getElementById(
+                    "connection"
+                )
+                .innerText =
+                    "MQTT CONNECTED";
+
+            document
+                .getElementById(
+                    "mqttStatus"
+                )
+                .innerText =
+                    "CONNECTED";
+
+            document
+                .getElementById(
+                    "statusDot"
+                )
+                .classList
+                .add(
+                    "status-online"
+                );
+
+            client.subscribe(
+                MQTT_STATUS_TOPIC
+            );
+
+        }
+    );
+
+    client.on(
+        "message",
+        function (
+            topic,
+            message
+        ) {
+
+            const msg =
+                message.toString();
+
+            console.log(
+                "MQTT:",
+                topic,
+                msg
+            );
+
+            if (
+                msg === "ONLINE"
+            ) {
+
+                document
+                    .getElementById(
+                        "deviceStatus"
+                    )
+                    .innerText =
+                        "ONLINE";
+            }
+
+        }
+    );
+
+    client.on(
+        "error",
+        function (error) {
+
+            console.error(
+                "MQTT ERROR:",
+                error
+            );
+
+            document
+                .getElementById(
+                    "connection"
+                )
+                .innerText =
+                    "MQTT ERROR";
+
+            document
+                .getElementById(
+                    "mqttStatus"
+                )
+                .innerText =
+                    "ERROR";
+        }
+    );
+
+    client.on(
+        "close",
+        function () {
+
+            document
+                .getElementById(
+                    "connection"
+                )
+                .innerText =
+                    "MQTT DISCONNECTED";
+
+            document
+                .getElementById(
+                    "mqttStatus"
+                )
+                .innerText =
+                    "DISCONNECTED";
+
+        }
+    );
+}
+
+function publish(
+    command
+) {
+
+    if (
+        !client ||
+        !client.connected
+    ) {
+
+        alert(
+            "MQTT not connected"
+        );
+
+        return;
+    }
+
+    console.log(
+        "Publishing:",
+        command
+    );
+
+    client.publish(
+        MQTT_COMMAND_TOPIC,
+        command
+    );
+}
+
+function setColor(
+    r,
+    g,
+    b
+) {
+
+    currentR = r;
+    currentG = g;
+    currentB = b;
+
+    let command;
+
+    if (
+        r === 255 &&
+        g === 0 &&
+        b === 0
+    ) {
+        command = "RED";
+    }
+
+    else if (
+        r === 0 &&
+        g === 255 &&
+        b === 0
+    ) {
+        command = "GREEN";
+    }
+
+    else if (
+        r === 0 &&
+        g === 0 &&
+        b === 255
+    ) {
+        command = "BLUE";
+    }
+
+    else if (
+        r === 255 &&
+        g === 255 &&
+        b === 0
+    ) {
+        command = "YELLOW";
+    }
+
+    else if (
+        r === 255 &&
+        g === 0 &&
+        b === 255
+    ) {
+        command = "PURPLE";
+    }
+
+    else if (
+        r === 255 &&
+        g === 255 &&
+        b === 255
+    ) {
+        command = "WHITE";
+    }
+
+    else {
+
+        command =
+            `RGB:${r},${g},${b}`;
+    }
+
+    publish(
+        command
+    );
+
+    updatePreview();
+}
+
+function turnOff() {
+
+    currentR = 0;
+    currentG = 0;
+    currentB = 0;
+
+    publish(
+        "OFF"
+    );
+
+    updatePreview();
+}
+
+function applyCustomColor() {
+
+    const hex =
+        document
+            .getElementById(
+                "colorPicker"
+            )
+            .value;
+
+    const r =
+        parseInt(
+            hex.substring(1,3),
+            16
+        );
+
+    const g =
+        parseInt(
+            hex.substring(3,5),
+            16
+        );
+
+    const b =
+        parseInt(
+            hex.substring(5,7),
+            16
+        );
+
+    currentR = r;
+    currentG = g;
+    currentB = b;
+
+    publish(
+        `RGB:${r},${g},${b}`
+    );
+
+    updatePreview();
+}
+
+function updateBrightness(
+    value
+) {
+
+    document
+        .getElementById(
+            "brightnessValue"
+        )
+        .innerText =
+            value + "%";
+
+    publish(
+        `BRIGHTNESS:${value}`
+    );
+}
+
+function updatePreview() {
+
+    document
+        .getElementById(
+            "preview"
+        )
+        .style.background =
+        `rgb(
+            ${currentR},
+            ${currentG},
+            ${currentB}
+        )`;
+}
+
+connectMQTT();
+
+</script>
+
+</body>
+
+</html>
